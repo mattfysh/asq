@@ -3,47 +3,33 @@ define(function() {
 	function asq(obj, methodName) {
 		var q = [], fn, origFn;
 
-		// setup the function to call for each request
-		if (!methodName) {
-			fn = obj;
-		} else {
-			fn = function() {
-				// give the correct binding
-				origFn.apply(obj, arguments);
+		// wrap a callback
+		function wrapCallback(cb) {
+			return function() {
+				cb.apply(null, arguments);
+				q.shift();
+				processNext();
 			}
 		}
 
-		function processQueue() {
-			// wrap a callback
-			function wrapCallback(cb) {
-				return function() {
-					cb.apply(null, arguments);
-					q.shift();
-					takeNext();
-				}
-			}
+		// gets the next item in the queue and sends it to the queued function
+		function processNext() {
+			var next = q[0];
 
-			// gets the next item in the queue and sends it to the queued function
-			function takeNext() {
-				var next = q[0];
-
-				if (next) {
-					// find and replace any function, assumed to be a callback
-					for (var i = 0; i < next.length; i += 1) {
-						if (typeof next[i] === 'function') {
-							next[i] = wrapCallback(next[i]);
-						}
+			if (next) {
+				// find and replace any function, assumed to be a callback
+				for (var i = 0; i < next.length; i += 1) {
+					if (typeof next[i] === 'function') {
+						next[i] = wrapCallback(next[i]);
 					}
-
-					// apply to original function
-					fn.apply(null, next);
 				}
-			}
 
-			// initiate the queue
-			takeNext();
+				// apply to original function
+				fn.apply(null, next);
+			}
 		}
 
+		// collect calls to the queued function
 		function proxy() {
 			var first = !q.length,
 				args = [].slice.call(arguments);
@@ -53,10 +39,11 @@ define(function() {
 
 			if (first) {
 				// there were no other items in the queue, process it
-				processQueue();
+				processNext();
 			}
 		};
 
+		// allow the original function to be restored to the object, unqueued
 		function restore() {
 			// restore the original function to the object
 			obj[methodName] = origFn;
@@ -65,12 +52,20 @@ define(function() {
 
 		}
 
+		// add a queue to the function
 		if (!methodName) {
+			// store reference to function
+			fn = obj;
 			// no context passed, return the queued function
 			return proxy;
 		} else {
-			// setup closure variables and attach the queued function to the object
+			// wrap function in closure to give it the correct binding
 			origFn = obj[methodName]
+			fn = function() {
+				// give the correct binding
+				origFn.apply(obj, arguments);
+			}
+			// attach the queued function to the object
 			proxy.restore = restore;
 			obj[methodName] = proxy;
 		}
