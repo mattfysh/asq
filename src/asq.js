@@ -14,12 +14,10 @@ define(function() {
 		}
 
 		function processQueue() {
-			var callbacks;
-
-			// creates a mapped callback
-			function getCallback(pos) {
+			// wrap a callback
+			function wrapCallback(cb) {
 				return function() {
-					callbacks[pos].apply(null, arguments);
+					cb.apply(null, arguments);
 					q.shift();
 					takeNext();
 				}
@@ -27,15 +25,13 @@ define(function() {
 
 			// gets the next item in the queue and sends it to the queued function
 			function takeNext() {
-				var next;
+				var next = q[0];
 
-				if (next = q[0]) {
+				if (next) {
 					// find and replace any function, assumed to be a callback
-					callbacks = {};
 					for (var i = 0; i < next.length; i += 1) {
 						if (typeof next[i] === 'function') {
-							callbacks[i] = next[i];
-							next[i] = getCallback(i);
+							next[i] = wrapCallback(next[i]);
 						}
 					}
 
