@@ -1,0 +1,3 @@
+require(['asq'], function() {
+	
+});
