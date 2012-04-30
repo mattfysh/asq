@@ -140,6 +140,8 @@ describe('asq', function() {
 		it('routes to the correct callback', function() {
 			asqFn(2, callback, errCallback);
 			expect(errCallback.called).toBe(false);
+			expect(callback.called).toBe(true);
+			expect(callback.args[0][0]).toBe(2);
 		});
 
 	});
