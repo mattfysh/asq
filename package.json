@@ -1,0 +1,11 @@
+{
+	name: "asq",
+	version: "0.1",
+	author: "Matt Fysh <mattfysh@gmail.com>",
+	description: "Wrap a 'one-at-a-time' queue around an asynchronous function.",
+	repository: {
+		type: "git",
+		url: "https://github.com/mattfysh/asq"
+	},
+	license: "MIT"
+}
